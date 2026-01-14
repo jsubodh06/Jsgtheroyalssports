@@ -1,221 +1,253 @@
-import React, { useState } from 'react';
-import { useAppContext } from '../../App';
-import { Trophy, Target, Users } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Trophy, Medal, Award, Target, Users, TrendingUp } from 'lucide-react';
+import { leaderboardApi } from '../../utils/api';
+
+type LeaderboardType = 'predictions' | 'fantasy' | 'teams';
 
 export function UserLeaderboard() {
-  const { games, predictions, fantasyTeams, user } = useAppContext();
-  const [view, setView] = useState<'prediction' | 'fantasy' | 'overall'>('overall');
+  const [activeTab, setActiveTab] = useState<LeaderboardType>('predictions');
+  const [predictionsLeaderboard, setPredictionsLeaderboard] = useState<any[]>([]);
+  const [fantasyLeaderboard, setFantasyLeaderboard] = useState<any[]>([]);
+  const [teamsLeaderboard, setTeamsLeaderboard] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock leaderboard data
-  const predictionLeaderboard = [
-    { rank: 1, name: 'John Doe', points: 450, accuracy: 75 },
-    { rank: 2, name: 'Sarah Smith', points: 420, accuracy: 72 },
-    { rank: 3, name: user?.name || 'You', points: 380, accuracy: 67 },
-    { rank: 4, name: 'Mike Wilson', points: 350, accuracy: 65 },
-    { rank: 5, name: 'Emma Brown', points: 320, accuracy: 62 },
+  useEffect(() => {
+    loadLeaderboards();
+  }, []);
+
+  const loadLeaderboards = async () => {
+    setLoading(true);
+    try {
+      const [predictions, fantasy, teams] = await Promise.all([
+        leaderboardApi.getPredictions().catch(() => ({ leaderboard: [] })),
+        leaderboardApi.getFantasy().catch(() => ({ leaderboard: [] })),
+        leaderboardApi.getTeams().catch(() => ({ leaderboard: [] }))
+      ]);
+
+      setPredictionsLeaderboard(predictions.leaderboard || []);
+      setFantasyLeaderboard(fantasy.leaderboard || []);
+      setTeamsLeaderboard(teams.leaderboard || []);
+    } catch (error) {
+      console.error('Failed to load leaderboards:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getRankBadge = (rank: number) => {
+    if (rank === 1) return '🥇';
+    if (rank === 2) return '🥈';
+    if (rank === 3) return '🥉';
+    return `#${rank}`;
+  };
+
+  const getRankColor = (rank: number) => {
+    if (rank === 1) return 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-white';
+    if (rank === 2) return 'bg-gradient-to-br from-gray-300 to-gray-500 text-white';
+    if (rank === 3) return 'bg-gradient-to-br from-orange-400 to-orange-600 text-white';
+    return 'bg-gray-100 text-gray-700';
+  };
+
+  const tabs = [
+    { id: 'predictions' as LeaderboardType, label: 'Predictions', icon: Target, color: 'blue' },
+    { id: 'fantasy' as LeaderboardType, label: 'Fantasy Teams', icon: Trophy, color: 'purple' },
+    { id: 'teams' as LeaderboardType, label: 'Team Rankings', icon: Users, color: 'green' }
   ];
-
-  const fantasyLeaderboard = [
-    { rank: 1, name: 'Mike Wilson', teamName: 'Warriors United', points: 1850 },
-    { rank: 2, name: 'Sarah Smith', teamName: 'Dream Strikers', points: 1720 },
-    { rank: 3, name: 'John Doe', teamName: 'Champions XI', points: 1680 },
-    { rank: 4, name: user?.name || 'You', teamName: 'My Dream Team', points: 1245 },
-    { rank: 5, name: 'Emma Brown', teamName: 'Phoenix Squad', points: 1190 },
-  ];
-
-  const overallLeaderboard = [
-    { rank: 1, name: 'Sarah Smith', predictionPts: 420, fantasyPts: 1720, totalPts: 2140 },
-    { rank: 2, name: 'John Doe', predictionPts: 450, fantasyPts: 1680, totalPts: 2130 },
-    { rank: 3, name: 'Mike Wilson', predictionPts: 350, fantasyPts: 1850, totalPts: 2200 },
-    { rank: 4, name: user?.name || 'You', predictionPts: 380, fantasyPts: 1245, totalPts: 1625 },
-    { rank: 5, name: 'Emma Brown', predictionPts: 320, fantasyPts: 1190, totalPts: 1510 },
-  ].sort((a, b) => b.totalPts - a.totalPts);
 
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Leaderboards</h2>
-        <p className="text-gray-600">Compare your performance with other participants</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+          <Trophy className="w-8 h-8 text-yellow-600" />
+          Leaderboards
+        </h2>
+        <p className="text-gray-600">See who's leading the competition</p>
       </div>
 
-      {/* View Tabs */}
-      <div className="flex gap-3 mb-6">
-        <button
-          onClick={() => setView('overall')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-            view === 'overall' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-          }`}
-        >
-          <Trophy className="w-5 h-5" />
-          Overall
-        </button>
-        <button
-          onClick={() => setView('prediction')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-            view === 'prediction' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-          }`}
-        >
-          <Target className="w-5 h-5" />
-          Predictions
-        </button>
-        <button
-          onClick={() => setView('fantasy')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-            view === 'fantasy' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-          }`}
-        >
-          <Users className="w-5 h-5" />
-          Fantasy
-        </button>
+      {/* Category Tabs */}
+      <div className="flex gap-2 mb-6 overflow-x-auto">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium whitespace-nowrap transition-all ${
+                activeTab === tab.id
+                  ? `bg-${tab.color}-600 text-white shadow-lg`
+                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Overall Leaderboard */}
-      {view === 'overall' && (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-6 text-white">
-            <h3 className="text-xl font-bold flex items-center gap-2">
-              <Trophy className="w-6 h-6" />
-              Overall Leaderboard
-            </h3>
-          </div>
-          <div className="divide-y divide-gray-200">
-            {overallLeaderboard.map((entry) => (
-              <div
-                key={entry.rank}
-                className={`p-6 flex items-center justify-between ${
-                  entry.name === user?.name ? 'bg-blue-50' : 'hover:bg-gray-50'
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
-                      entry.rank === 1
-                        ? 'bg-yellow-400 text-white'
-                        : entry.rank === 2
-                        ? 'bg-gray-300 text-white'
-                        : entry.rank === 3
-                        ? 'bg-orange-400 text-white'
-                        : 'bg-gray-200 text-gray-700'
-                    }`}
-                  >
-                    {entry.rank}
-                  </div>
-                  <div>
-                    <div className="font-medium text-lg">{entry.name}</div>
-                    <div className="text-sm text-gray-600">
-                      Prediction: {entry.predictionPts} • Fantasy: {entry.fantasyPts}
+      {loading ? (
+        <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-gray-600">Loading leaderboard...</p>
+        </div>
+      ) : (
+        <>
+          {/* Predictions Leaderboard */}
+          {activeTab === 'predictions' && (
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white">
+                <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
+                  <Target className="w-6 h-6" />
+                  Match Predictions Leaderboard
+                </h3>
+                <p className="text-blue-100 text-sm">
+                  Rankings based on correct match outcome predictions
+                </p>
+              </div>
+
+              {predictionsLeaderboard.length === 0 ? (
+                <div className="p-12 text-center text-gray-500">
+                  <Target className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <p>No predictions made yet. Be the first to predict!</p>
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {predictionsLeaderboard.map((entry, index) => (
+                    <div
+                      key={entry.userId}
+                      className={`flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors ${
+                        index < 3 ? 'bg-gradient-to-r from-yellow-50 to-transparent' : ''
+                      }`}
+                    >
+                      <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold ${getRankColor(entry.rank)}`}>
+                        {getRankBadge(entry.rank)}
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-bold text-lg">{entry.userName}</div>
+                        <div className="text-sm text-gray-600">
+                          {entry.points} prediction points
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-3xl font-bold text-blue-600">{entry.points}</div>
+                        <div className="text-xs text-gray-600">POINTS</div>
+                      </div>
                     </div>
-                  </div>
-                  {entry.name === user?.name && (
-                    <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full">You</span>
-                  )}
+                  ))}
                 </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-blue-600">{entry.totalPts}</div>
-                  <div className="text-xs text-gray-600">Total Points</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+              )}
+            </div>
+          )}
 
-      {/* Prediction Leaderboard */}
-      {view === 'prediction' && (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
-            <h3 className="text-xl font-bold flex items-center gap-2">
-              <Target className="w-6 h-6" />
-              Prediction Leaderboard
-            </h3>
-          </div>
-          <div className="divide-y divide-gray-200">
-            {predictionLeaderboard.map((entry) => (
-              <div
-                key={entry.rank}
-                className={`p-6 flex items-center justify-between ${
-                  entry.name === user?.name ? 'bg-blue-50' : 'hover:bg-gray-50'
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
-                      entry.rank === 1
-                        ? 'bg-yellow-400 text-white'
-                        : entry.rank === 2
-                        ? 'bg-gray-300 text-white'
-                        : entry.rank === 3
-                        ? 'bg-orange-400 text-white'
-                        : 'bg-gray-200 text-gray-700'
-                    }`}
-                  >
-                    {entry.rank}
-                  </div>
-                  <div>
-                    <div className="font-medium text-lg">{entry.name}</div>
-                    <div className="text-sm text-gray-600">Accuracy: {entry.accuracy}%</div>
-                  </div>
-                  {entry.name === user?.name && (
-                    <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full">You</span>
-                  )}
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-blue-600">{entry.points}</div>
-                  <div className="text-xs text-gray-600">Points</div>
-                </div>
+          {/* Fantasy Teams Leaderboard */}
+          {activeTab === 'fantasy' && (
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <div className="bg-gradient-to-r from-purple-600 to-purple-700 p-6 text-white">
+                <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
+                  <Trophy className="w-6 h-6" />
+                  Fantasy Teams Leaderboard
+                </h3>
+                <p className="text-purple-100 text-sm">
+                  Rankings based on fantasy team performance
+                </p>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
 
-      {/* Fantasy Leaderboard */}
-      {view === 'fantasy' && (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white">
-            <h3 className="text-xl font-bold flex items-center gap-2">
-              <Users className="w-6 h-6" />
-              Fantasy Leaderboard
-            </h3>
-          </div>
-          <div className="divide-y divide-gray-200">
-            {fantasyLeaderboard.map((entry) => (
-              <div
-                key={entry.rank}
-                className={`p-6 flex items-center justify-between ${
-                  entry.name === user?.name ? 'bg-blue-50' : 'hover:bg-gray-50'
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
-                      entry.rank === 1
-                        ? 'bg-yellow-400 text-white'
-                        : entry.rank === 2
-                        ? 'bg-gray-300 text-white'
-                        : entry.rank === 3
-                        ? 'bg-orange-400 text-white'
-                        : 'bg-gray-200 text-gray-700'
-                    }`}
-                  >
-                    {entry.rank}
-                  </div>
-                  <div>
-                    <div className="font-medium text-lg">{entry.name}</div>
-                    <div className="text-sm text-gray-600">{entry.teamName}</div>
-                  </div>
-                  {entry.name === user?.name && (
-                    <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full">You</span>
-                  )}
+              {fantasyLeaderboard.length === 0 ? (
+                <div className="p-12 text-center text-gray-500">
+                  <Trophy className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <p>No fantasy teams created yet. Create your dream team!</p>
                 </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-purple-600">{entry.points}</div>
-                  <div className="text-xs text-gray-600">Points</div>
+              ) : (
+                <div className="divide-y">
+                  {fantasyLeaderboard.map((entry, index) => (
+                    <div
+                      key={entry.teamId}
+                      className={`flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors ${
+                        index < 3 ? 'bg-gradient-to-r from-purple-50 to-transparent' : ''
+                      }`}
+                    >
+                      <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold ${getRankColor(entry.rank)}`}>
+                        {getRankBadge(entry.rank)}
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-bold text-lg">{entry.teamName}</div>
+                        <div className="text-sm text-gray-600">
+                          by {entry.userName}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-3xl font-bold text-purple-600">{entry.points}</div>
+                        <div className="text-xs text-gray-600">POINTS</div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* Teams Leaderboard */}
+          {activeTab === 'teams' && (
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <div className="bg-gradient-to-r from-green-600 to-green-700 p-6 text-white">
+                <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
+                  <Users className="w-6 h-6" />
+                  Team Rankings
+                </h3>
+                <p className="text-green-100 text-sm">
+                  Tournament standings based on match wins
+                </p>
               </div>
-            ))}
+
+              {teamsLeaderboard.length === 0 ? (
+                <div className="p-12 text-center text-gray-500">
+                  <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <p>No matches completed yet. Check back after matches are played!</p>
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {teamsLeaderboard.map((entry, index) => (
+                    <div
+                      key={entry.teamId}
+                      className={`flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors ${
+                        index < 3 ? 'bg-gradient-to-r from-green-50 to-transparent' : ''
+                      }`}
+                    >
+                      <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold ${getRankColor(entry.rank)}`}>
+                        {getRankBadge(entry.rank)}
+                      </div>
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="text-4xl">{entry.logo}</div>
+                        <div>
+                          <div className="font-bold text-lg">{entry.teamName}</div>
+                          <div className="text-sm text-gray-600">
+                            {entry.wins}W - {entry.losses}L ({entry.played} played)
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-3xl font-bold text-green-600">{entry.points}</div>
+                        <div className="text-xs text-gray-600">POINTS</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Refresh Button */}
+          <div className="mt-6 text-center">
+            <button
+              onClick={loadLeaderboards}
+              disabled={loading}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium disabled:opacity-50"
+            >
+              <TrendingUp className="w-5 h-5" />
+              {loading ? 'Refreshing...' : 'Refresh Leaderboards'}
+            </button>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

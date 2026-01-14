@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../App';
-import { Trophy, Calendar, Users } from 'lucide-react';
+import { Trophy, Calendar, Users, Zap, Target, PlayCircle } from 'lucide-react';
 
 interface PublicViewProps {
   onNavigateToLogin: () => void;
@@ -8,15 +8,7 @@ interface PublicViewProps {
 
 export function PublicView({ onNavigateToLogin }: PublicViewProps) {
   const { matches, games, teams, players } = useAppContext();
-  const [activeTab, setActiveTab] = useState<'fixtures' | 'leaderboard' | 'teams'>('fixtures');
-
-  // Mock leaderboard data
-  const leaderboard = [
-    { rank: 1, team: teams[0], points: 45, wins: 8, losses: 2 },
-    { rank: 2, team: teams[1], points: 42, wins: 7, losses: 3 },
-    { rank: 3, team: teams[2], points: 38, wins: 6, losses: 4 },
-    { rank: 4, team: teams[3], points: 35, wins: 5, losses: 5 },
-  ];
+  const [activeTab, setActiveTab] = useState<'fixtures' | 'features' | 'teams'>('features');
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -34,10 +26,66 @@ export function PublicView({ onNavigateToLogin }: PublicViewProps) {
             >
               Join Now
             </button>
-            <button className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-400 font-medium transition-colors">
+            <button 
+              onClick={onNavigateToLogin}
+              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-400 font-medium transition-colors"
+            >
               Watch Live Auction
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Testing Guide */}
+      <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-2xl p-8 mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <PlayCircle className="w-8 h-8 text-orange-600" />
+          🎮 Test Multi-User Auction (For Demo)
+        </h2>
+        <p className="text-gray-700 mb-4">
+          Experience real-time multi-user bidding by opening multiple browser windows/tabs:
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="bg-white rounded-lg p-4 border-2 border-purple-200">
+            <div className="text-3xl mb-2">👤</div>
+            <div className="font-bold text-purple-900 mb-1">Window 1: Admin</div>
+            <ol className="text-sm text-gray-700 space-y-1">
+              <li>1. Click "Login"</li>
+              <li>2. Use quick "Login as Admin"</li>
+              <li>3. Go to Admin Dashboard</li>
+              <li>4. Navigate to "Auction Control"</li>
+              <li>5. Start an auction</li>
+            </ol>
+          </div>
+          
+          <div className="bg-white rounded-lg p-4 border-2 border-green-200">
+            <div className="text-3xl mb-2">👥</div>
+            <div className="font-bold text-green-900 mb-1">Window 2: Team Owner 1</div>
+            <ol className="text-sm text-gray-700 space-y-1">
+              <li>1. Open new incognito window</li>
+              <li>2. Click "Login"</li>
+              <li>3. Email: owner@sports.com</li>
+              <li>4. Password: owner123</li>
+              <li>5. Click "Live Auction" & bid!</li>
+            </ol>
+          </div>
+          
+          <div className="bg-white rounded-lg p-4 border-2 border-blue-200">
+            <div className="text-3xl mb-2">👥</div>
+            <div className="font-bold text-blue-900 mb-1">Window 3: Team Owner 2</div>
+            <ol className="text-sm text-gray-700 space-y-1">
+              <li>1. Open another incognito</li>
+              <li>2. Create new account</li>
+              <li>3. Role: "Team Owner"</li>
+              <li>4. Create a team first</li>
+              <li>5. Join auction & compete!</li>
+            </ol>
+          </div>
+        </div>
+        <div className="bg-orange-100 border border-orange-300 rounded-lg p-4">
+          <p className="text-sm text-orange-900">
+            <strong>💡 Pro Tip:</strong> The auction updates every 2 seconds across all windows. Watch bids appear in real-time as different team owners compete!
+          </p>
         </div>
       </div>
 
@@ -107,14 +155,14 @@ export function PublicView({ onNavigateToLogin }: PublicViewProps) {
               📅 Fixtures
             </button>
             <button
-              onClick={() => setActiveTab('leaderboard')}
+              onClick={() => setActiveTab('features')}
               className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                activeTab === 'leaderboard'
+                activeTab === 'features'
                   ? 'bg-blue-600 text-white'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              🏆 Leaderboard
+              🚀 Features
             </button>
             <button
               onClick={() => setActiveTab('teams')}
@@ -190,49 +238,44 @@ export function PublicView({ onNavigateToLogin }: PublicViewProps) {
             </div>
           )}
 
-          {activeTab === 'leaderboard' && (
-            <div className="space-y-3">
-              {leaderboard.map((entry) => (
-                <div
-                  key={entry.rank}
-                  className={`flex items-center justify-between p-4 rounded-lg border ${
-                    entry.rank === 1
-                      ? 'bg-yellow-50 border-yellow-200'
-                      : 'bg-white border-gray-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                      entry.rank === 1 ? 'bg-yellow-400 text-white' :
-                      entry.rank === 2 ? 'bg-gray-300 text-white' :
-                      entry.rank === 3 ? 'bg-orange-400 text-white' :
-                      'bg-gray-200 text-gray-700'
-                    }`}>
-                      {entry.rank}
-                    </div>
-                    <div className="text-3xl">{entry.team.logo}</div>
-                    <div>
-                      <div className="font-medium">{entry.team.name}</div>
-                      <div className="text-sm text-gray-600">{entry.team.ownerName}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-8">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">{entry.points}</div>
-                      <div className="text-xs text-gray-600">Points</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-medium text-green-600">{entry.wins}W</div>
-                      <div className="text-xs text-gray-600">Wins</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-medium text-red-600">{entry.losses}L</div>
-                      <div className="text-xs text-gray-600">Losses</div>
-                    </div>
+          {activeTab === 'features' && (
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg p-4 border-2 border-gray-200">
+                <div className="flex items-center gap-4">
+                  <Zap className="w-6 h-6 text-blue-600" />
+                  <div>
+                    <h3 className="text-xl font-bold">Live Bidding</h3>
+                    <p className="text-sm text-gray-600">Participate in real-time auctions to bid on players and assets.</p>
                   </div>
                 </div>
-              ))}
+              </div>
+              <div className="bg-white rounded-lg p-4 border-2 border-gray-200">
+                <div className="flex items-center gap-4">
+                  <Target className="w-6 h-6 text-green-600" />
+                  <div>
+                    <h3 className="text-xl font-bold">Fantasy Leagues</h3>
+                    <p className="text-sm text-gray-600">Create and manage your own fantasy teams to compete against others.</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg p-4 border-2 border-gray-200">
+                <div className="flex items-center gap-4">
+                  <Calendar className="w-6 h-6 text-orange-600" />
+                  <div>
+                    <h3 className="text-xl font-bold">Match Predictions</h3>
+                    <p className="text-sm text-gray-600">Predict match outcomes and earn points based on your accuracy.</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg p-4 border-2 border-gray-200">
+                <div className="flex items-center gap-4">
+                  <Trophy className="w-6 h-6 text-purple-600" />
+                  <div>
+                    <h3 className="text-xl font-bold">Real-Time Tournaments</h3>
+                    <p className="text-sm text-gray-600">Join tournaments that update in real-time as matches are played.</p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
